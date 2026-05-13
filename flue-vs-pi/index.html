@@ -1,0 +1,392 @@
+<!--
+Assumptions:
+- Audience wants a high-level architectural orientation, not an exhaustive API map.
+- Relationship claims are grounded in repo inspection plus DeepWiki, with direct code verification where important.
+- Key verified link: Flue runtime depends on pi-agent-core and pi-ai, but not on pi-coding-agent/TUI.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flue vs Pi — Architecture Explainer</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --paper: #fffdf9;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d9d1c3;
+      --accent: #9a5b31;
+      --accent-soft: #f4e7dd;
+      --oat: #eee6d9;
+      --olive: #496a4d;
+      --olive-soft: #e7f1e8;
+      --blue: #355c7d;
+      --blue-soft: #e5edf5;
+      --shadow: 0 8px 26px rgba(34, 34, 34, 0.08);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Iowan Old Style, Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 32px auto 60px;
+    }
+    .hero, .panel, .table-card, .timeline-card, .tab-panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+    .eyebrow, .kpi-label, .mini-label, .repo-path, .pill, code, .tab-btn {
+      font-family: var(--mono);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      margin-bottom: 10px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 10px;
+      line-height: 1.1;
+    }
+    h1, h2 {
+      font-family: var(--serif);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h1 { font-size: clamp(2rem, 4vw, 3.6rem); }
+    h2 { font-size: clamp(1.4rem, 2vw, 2.1rem); }
+    h3 { font-size: 1rem; }
+    p { margin: 0 0 12px; }
+    .lede { font-size: 1.05rem; color: #374151; max-width: 78ch; }
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 0;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      background: linear-gradient(180deg, #fff, #fbf8f3);
+    }
+    .kpi-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .kpi-value { font-size: 1.05rem; font-weight: 700; margin-top: 6px; }
+    .grid-2, .grid-3 { display: grid; gap: 16px; margin-top: 18px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .panel { padding: 20px; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .pill {
+      font-size: 12px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+    .pill.reco { background: var(--accent-soft); color: #7a431f; border-color: #e9c7b1; }
+    .pill.good { background: var(--olive-soft); color: var(--olive); border-color: #bfd2c1; }
+    .stack {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+    .layer.flue-a { background: #fff4ee; }
+    .layer.flue-b { background: #fff9f2; }
+    .layer.flue-c { background: #faf8f2; }
+    .layer.pi-a { background: #eef5fb; }
+    .layer.pi-b { background: #f5f9fc; }
+    .layer.pi-c { background: #fafcfd; }
+    .layer-title { font-weight: 700; margin-bottom: 4px; }
+    .mini { color: var(--muted); font-size: .95rem; }
+    .arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+    }
+    .callout {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      border: 1px solid #ecd5c7;
+      background: #fff6f0;
+      border-radius: 12px;
+    }
+    .tabs { margin-top: 18px; }
+    .tab-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: #fff;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .tab-btn.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+    .tab-panel { display: none; padding: 20px; }
+    .tab-panel.active { display: block; }
+    .comparison {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .96rem;
+    }
+    .comparison th, .comparison td {
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .comparison th { color: var(--muted); font-weight: 600; }
+    .comparison thead th { border-top: 0; }
+    .timeline-card { padding: 18px; margin-top: 18px; }
+    .timeline { display: grid; gap: 14px; }
+    .step {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .dot {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 700;
+      background: var(--oat); border: 1px solid var(--line);
+    }
+    .repo-path {
+      display: inline-block;
+      font-size: 12px;
+      background: #f8f5ef;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    a { color: var(--blue); }
+    @media (max-width: 900px) {
+      .summary-strip, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Architecture explainer</div>
+      <h1>Flue vs Pi</h1>
+      <p class="lede">Short version: <strong>Pi</strong> is the broader agent/coding-agent stack, while <strong>Flue</strong> is a newer headless framework that reuses Pi’s lower-level engine pieces to make deployable, programmable agents.</p>
+      <div class="summary-strip">
+        <div class="kpi"><div class="kpi-label">Flue</div><div class="kpi-value">Headless agent framework</div></div>
+        <div class="kpi"><div class="kpi-label">Pi</div><div class="kpi-value">Agent runtime + coding CLI + TUI</div></div>
+        <div class="kpi"><div class="kpi-label">Direct code relationship</div><div class="kpi-value">Flue runtime depends on pi-agent-core + pi-ai</div></div>
+        <div class="kpi"><div class="kpi-label">Big distinction</div><div class="kpi-value">Flue is deploy-first; Pi is operator-first</div></div>
+      </div>
+    </section>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="badges">
+          <span class="pill reco">Flue mental model</span>
+          <span class="pill">"Astro/Next.js for agents"</span>
+        </div>
+        <h2>What Flue is</h2>
+        <p>Flue is a framework for building autonomous agents as application code. You write agent handlers in TypeScript, call <code>init()</code> to get a harness, then work through sessions, tools, sandboxes, skills, and HTTP deployment targets.</p>
+        <div class="stack">
+          <div class="layer flue-a"><div class="layer-title">Agent handler</div><div class="mini">Your <code>.flue/agents/*.ts</code> code</div></div>
+          <div class="arrow">↓</div>
+          <div class="layer flue-b"><div class="layer-title">Harness + Session</div><div class="mini">Model defaults, role overlays, task delegation, persistence</div></div>
+          <div class="arrow">↓</div>
+          <div class="layer flue-c"><div class="layer-title">Sandbox + tools + filesystem</div><div class="mini">Virtual bash, local shell, Cloudflare, or connector-backed containers</div></div>
+        </div>
+        <div class="repo-path">Verified in: flue/packages/runtime/src/harness.ts, session.ts, runtime/flue-app.ts</div>
+      </section>
+
+      <section class="panel">
+        <div class="badges">
+          <span class="pill good">Pi mental model</span>
+          <span class="pill">"Agent engine plus coding-agent product"</span>
+        </div>
+        <h2>What Pi is</h2>
+        <p>Pi is a monorepo with multiple layers: a provider abstraction, a generic agent loop, a session/runtime layer for coding work, and UI surfaces like the terminal app. The coding agent is the visible product, but it sits on reusable lower-level packages.</p>
+        <div class="stack">
+          <div class="layer pi-a"><div class="layer-title">pi-coding-agent</div><div class="mini">CLI, sessions, slash commands, extensions, built-in coding tools</div></div>
+          <div class="arrow">↓</div>
+          <div class="layer pi-b"><div class="layer-title">pi-agent-core</div><div class="mini">Agent loop, tool execution, streaming lifecycle, steering/follow-up queues</div></div>
+          <div class="arrow">↓</div>
+          <div class="layer pi-c"><div class="layer-title">pi-ai</div><div class="mini">Unified model/provider layer across Anthropic, OpenAI, Google, Bedrock, etc.</div></div>
+        </div>
+        <div class="repo-path">Verified in: pi/packages/coding-agent/src/core/sdk.ts, pi/packages/agent/src/agent.ts, agent-loop.ts</div>
+      </section>
+    </div>
+
+    <section class="callout">
+      <strong>The most important relationship:</strong> Flue is not just “similar to Pi.” It literally builds on Pi internals. In <code>flue/packages/runtime/package.json</code>, Flue depends on <code>@mariozechner/pi-agent-core</code> and <code>@mariozechner/pi-ai</code>. So Flue is effectively packaging Pi’s lower-level engine into a new framework-oriented developer experience.
+    </section>
+
+    <section class="tabs">
+      <div class="tab-row">
+        <button class="tab-btn active" data-tab="tab-1">How Flue is architected</button>
+        <button class="tab-btn" data-tab="tab-2">How Pi is architected</button>
+        <button class="tab-btn" data-tab="tab-3">How they relate</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-1">
+        <h2>Flue architecture</h2>
+        <div class="grid-3">
+          <div class="panel">
+            <h3>1. Agent-first API</h3>
+            <p>The public abstraction is the <em>agent handler</em>. A handler gets a <code>FlueContext</code>, calls <code>init()</code>, and then works through a harness/session object rather than managing raw provider calls itself.</p>
+          </div>
+          <div class="panel">
+            <h3>2. Harness/session split</h3>
+            <p><code>Harness</code> owns config + storage + environment. <code>Session</code> owns the conversation, prompt/skill/task/shell calls, history persistence, and compaction.</p>
+          </div>
+          <div class="panel">
+            <h3>3. Deployment-aware runtime</h3>
+            <p>Flue includes runtime machinery for Node and Cloudflare. Its Hono-based app layer exposes agent routes, run routes, and per-target execution behavior.</p>
+          </div>
+        </div>
+        <div class="timeline-card">
+          <div class="timeline">
+            <div class="step"><div class="dot">1</div><div><strong>HTTP or CLI trigger hits an agent.</strong><br><span class="mini">Agent routes are mounted by Flue’s runtime app layer.</span></div></div>
+            <div class="step"><div class="dot">2</div><div><strong><code>init()</code> builds a harness.</strong><br><span class="mini">This wires together model defaults, tools, roles, session store, and sandbox.</span></div></div>
+            <div class="step"><div class="dot">3</div><div><strong><code>harness.session()</code> opens a durable conversation.</strong><br><span class="mini">Sessions are keyed by instance/harness/session name and persisted via a store.</span></div></div>
+            <div class="step"><div class="dot">4</div><div><strong>Prompt/skill/task calls drive the agent loop.</strong><br><span class="mini">Flue wraps pi-agent-core’s Agent and injects built-in tools like read/write/edit/bash/task.</span></div></div>
+            <div class="step"><div class="dot">5</div><div><strong>Sandbox abstracts execution.</strong><br><span class="mini">Virtual bash is the default; local or remote/container connectors are pluggable.</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-2">
+        <h2>Pi architecture</h2>
+        <table class="comparison">
+          <thead>
+            <tr><th>Layer</th><th>What it does</th><th>Why it matters</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>pi-ai</strong></td>
+              <td>Model registry, provider adapters, streaming protocol normalization, auth/key resolution.</td>
+              <td>Makes the rest of Pi mostly provider-agnostic.</td>
+            </tr>
+            <tr>
+              <td><strong>pi-agent-core</strong></td>
+              <td>Runs the agent loop: send messages, stream assistant output, execute tools, feed tool results back, continue until stop.</td>
+              <td>This is the reusable brainstem both Pi and Flue rely on.</td>
+            </tr>
+            <tr>
+              <td><strong>pi-coding-agent</strong></td>
+              <td>Adds coding workflows: file tools, session persistence, slash commands, extensions, prompt templates, system prompt building.</td>
+              <td>This is the actual coding assistant product users interact with.</td>
+            </tr>
+            <tr>
+              <td><strong>pi-tui</strong></td>
+              <td>Terminal UI library with differential rendering.</td>
+              <td>Lets Pi ship a rich interactive CLI instead of only a headless API.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:16px;">
+          <strong>Pi’s center of gravity is operator experience.</strong> It is deeply optimized for an interactive coding session: sessions on disk, model switching, queued steering/follow-up messages, slash commands, extension hooks, session export, TUI, and RPC/SDK surfaces.
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-3">
+        <h2>How they relate</h2>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Shared DNA</h3>
+            <p>Flue reuses Pi’s engine instead of reinventing it. The strongest evidence is direct package dependency plus matching concepts:</p>
+            <ul>
+              <li>assistant/tool-call loop</li>
+              <li>session state and message history</li>
+              <li>context compaction</li>
+              <li>provider abstraction</li>
+              <li>tool-based agent execution</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Divergence in product shape</h3>
+            <p>Pi grows “upward” into a coding-agent product and UI. Flue grows “outward” into a framework/runtime for deployable agents, sandboxes, connectors, and web-triggered workloads.</p>
+          </div>
+        </div>
+        <div class="timeline-card">
+          <h3 style="margin-bottom:14px;">Best practical mental model</h3>
+          <div class="timeline">
+            <div class="step"><div class="dot">A</div><div><strong>If you want a programmable agent framework</strong> → think <strong>Flue</strong>.</div></div>
+            <div class="step"><div class="dot">B</div><div><strong>If you want an interactive coding agent / harness product</strong> → think <strong>Pi</strong>.</div></div>
+            <div class="step"><div class="dot">C</div><div><strong>If you want to understand Flue internals</strong> → it helps to understand <strong>pi-agent-core</strong> and <strong>pi-ai</strong>, because that is where much of the underlying loop/provider machinery comes from.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2" style="margin-top:18px;">
+      <div class="panel">
+        <h2>One-sentence summaries</h2>
+        <p><strong>Flue:</strong> a headless agent application framework that turns Pi-style agent mechanics into deployable app infrastructure.</p>
+        <p><strong>Pi:</strong> a modular agent stack whose most visible product is a powerful coding-agent CLI, backed by reusable core runtime and model layers.</p>
+      </div>
+      <div class="panel">
+        <h2>Code-review anchors</h2>
+        <p class="mini"><strong>Flue</strong>: <code>packages/runtime/src/harness.ts</code>, <code>session.ts</code>, <code>runtime/flue-app.ts</code>, <code>packages/runtime/package.json</code></p>
+        <p class="mini"><strong>Pi</strong>: <code>packages/agent/src/agent.ts</code>, <code>agent-loop.ts</code>, <code>packages/coding-agent/src/core/sdk.ts</code>, <code>agent-session.ts</code></p>
+      </div>
+    </section>
+
+    <p class="footer-note">Built from local repo inspection of <a href="https://github.com/withastro/flue">withastro/flue</a> and <a href="https://github.com/earendil-works/pi">earendil-works/pi</a>, with DeepWiki used as an orientation aid and source code used to verify the main architectural claims.</p>
+  </div>
+
+  <script>
+    const buttons = Array.from(document.querySelectorAll('.tab-btn'));
+    const panels = Array.from(document.querySelectorAll('.tab-panel'));
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-tab');
+        buttons.forEach((b) => b.classList.toggle('active', b === btn));
+        panels.forEach((p) => p.classList.toggle('active', p.id === id));
+      });
+    });
+  </script>
+</body>
+</html>
