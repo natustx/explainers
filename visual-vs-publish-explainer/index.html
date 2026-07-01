@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visual Explainer vs Publish Explainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:opsz@8..144&family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1720;
+      --surface: #16212b;
+      --surface-2: #1d2b37;
+      --surface-3: #233443;
+      --border: rgba(222, 232, 240, .12);
+      --border-strong: rgba(222, 232, 240, .22);
+      --text: #f3efe6;
+      --text-dim: #b8c2c8;
+      --muted: #7d8b93;
+      --maker: #df8d5f;
+      --maker-dim: rgba(223, 141, 95, .15);
+      --shipper: #86b98b;
+      --shipper-dim: rgba(134, 185, 139, .15);
+      --gold: #d7b45f;
+      --ink: #0b1016;
+      --shadow: 0 22px 60px rgba(0, 0, 0, .28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 16% 8%, rgba(223, 141, 95, .16), transparent 36rem),
+        radial-gradient(circle at 92% 14%, rgba(134, 185, 139, .16), transparent 34rem),
+        linear-gradient(145deg, #0f1720 0%, #101922 48%, #17212a 100%);
+      color: var(--text);
+      font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+      overflow-wrap: break-word;
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 36px));
+      margin: 0 auto;
+      padding: 42px 0 70px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--text-dim);
+      font: 700 11px/1 "JetBrains Mono", monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 5px rgba(215, 180, 95, .12); }
+
+    h1 {
+      margin: 0;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .88;
+      letter-spacing: -.045em;
+      font-weight: 400;
+    }
+
+    .lede {
+      margin: 18px 0 0;
+      max-width: 760px;
+      color: var(--text-dim);
+      font-size: clamp(17px, 2vw, 22px);
+      line-height: 1.45;
+    }
+
+    .stamp {
+      display: grid;
+      place-items: center;
+      width: 148px;
+      height: 148px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      color: var(--gold);
+      font: 700 12px/1.45 "JetBrains Mono", monospace;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      transform: rotate(7deg);
+      background: rgba(215, 180, 95, .06);
+    }
+
+    .thesis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 34px 0;
+    }
+
+    .tile, .panel, .skill-card {
+      min-width: 0;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .tile {
+      padding: 22px;
+    }
+
+    .tile strong {
+      display: block;
+      font-size: 13px;
+      color: var(--gold);
+      font-family: "JetBrains Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      margin-bottom: 8px;
+    }
+
+    .tile span { color: var(--text-dim); line-height: 1.55; }
+
+    .duo {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+      margin: 30px 0;
+    }
+
+    .skill-card {
+      position: relative;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .skill-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 7px;
+      background: var(--stripe);
+    }
+
+    .visual { --stripe: linear-gradient(90deg, var(--maker), #e7b685); }
+    .publish { --stripe: linear-gradient(90deg, var(--shipper), #c4d98d); }
+
+    .skill-card h2 {
+      margin: 0 0 10px;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(34px, 4vw, 52px);
+      font-weight: 400;
+      letter-spacing: -.03em;
+    }
+
+    .role {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font: 700 11px/1 "JetBrains Mono", monospace;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .visual .role { color: var(--maker); background: var(--maker-dim); }
+    .publish .role { color: var(--shipper); background: var(--shipper-dim); }
+
+    .skill-card p { color: var(--text-dim); line-height: 1.6; margin: 0 0 18px; }
+
+    .mini-list { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+    .mini-list li {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+    .mini-list b { color: var(--text); }
+    .check {
+      display: inline-grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.07);
+      color: var(--gold);
+      font-size: 12px;
+      flex: none;
+    }
+
+    .handoff {
+      align-self: center;
+      display: grid;
+      place-items: center;
+      gap: 10px;
+      color: var(--gold);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .arrow {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 1px solid var(--border-strong);
+      display: grid;
+      place-items: center;
+      background: rgba(215,180,95,.08);
+    }
+    .arrow svg { width: 46px; height: 46px; }
+
+    .workflow {
+      margin: 34px 0;
+      padding: 28px;
+    }
+
+    .section-title {
+      margin: 0 0 18px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 400;
+      letter-spacing: -.03em;
+    }
+    .section-title code {
+      color: var(--text-dim);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .step {
+      position: relative;
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      min-height: 150px;
+    }
+    .step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translate(50%, -50%);
+      color: var(--gold);
+      font: 700 18px/1 "JetBrains Mono", monospace;
+      z-index: 2;
+    }
+    .num { color: var(--muted); font: 700 11px/1 "JetBrains Mono", monospace; letter-spacing: .08em; }
+    .step h3 { margin: 28px 0 8px; font-size: 18px; }
+    .step p { margin: 0; color: var(--text-dim); line-height: 1.45; font-size: 14px; }
+    .maker-step { box-shadow: inset 0 0 0 1px rgba(223,141,95,.24); }
+    .ship-step { box-shadow: inset 0 0 0 1px rgba(134,185,139,.24); }
+
+    .comparison {
+      margin-top: 34px;
+      overflow: hidden;
+    }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td { padding: 16px 18px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th {
+      color: var(--gold);
+      font: 700 11px/1 "JetBrains Mono", monospace;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.035);
+    }
+    td { color: var(--text-dim); line-height: 1.5; }
+    td:first-child { color: var(--text); font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    .pill {
+      display: inline-block;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font: 700 11px/1 "JetBrains Mono", monospace;
+      white-space: nowrap;
+    }
+    .pill-maker { color: var(--maker); background: var(--maker-dim); }
+    .pill-shipper { color: var(--shipper); background: var(--shipper-dim); }
+
+    .rule-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .rule {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(255,255,255,.035);
+    }
+    .rule h3 { margin: 0 0 10px; font-size: 18px; }
+    .rule p { margin: 0; color: var(--text-dim); line-height: 1.55; }
+    .rule code { font-family: "JetBrains Mono", monospace; color: var(--gold); }
+
+    footer {
+      margin-top: 34px;
+      color: var(--muted);
+      font: 12px/1.6 "JetBrains Mono", monospace;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .duo, .thesis, .rule-cards { grid-template-columns: 1fr; }
+      .stamp { display: none; }
+      .handoff { grid-row: auto; transform: rotate(90deg); margin: -8px 0; }
+      .pipeline { grid-template-columns: 1fr; }
+      .step:not(:last-child)::after { right: 50%; top: auto; bottom: -13px; transform: translate(50%, 50%) rotate(90deg); }
+      .section-title { display: block; }
+      .section-title code { display: inline-block; margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> Skill map for this repo</div>
+        <h1>Visual Explainer makes the page. Publish Explainer ships it.</h1>
+        <p class="lede">These two skills form a simple production line: one turns complex material into a polished standalone HTML explanation; the other copies that finished HTML into the public explainers repo, updates the catalog, commits, pushes, and returns a shareable URL.</p>
+      </div>
+      <div class="stamp">Created with<br>/visual-explainer<br>v0.8.1</div>
+    </header>
+
+    <section class="thesis" aria-label="Core distinction">
+      <div class="tile"><strong>Input</strong><span>Visual Explainer starts from ideas, code, plans, diffs, data, or diagrams. Publish Explainer starts from an existing standalone <code>.html</code> file.</span></div>
+      <div class="tile"><strong>Output</strong><span>Visual Explainer outputs local HTML in <code>~/.agent/diagrams/</code>. Publish Explainer outputs a GitHub Pages URL plus repo changes.</span></div>
+      <div class="tile"><strong>Boundary</strong><span>Visual Explainer is creative/rendering work. Publish Explainer is deployment/release work.</span></div>
+    </section>
+
+    <section class="duo" aria-label="Side by side comparison">
+      <article class="skill-card visual">
+        <div class="role">Maker / renderer</div>
+        <h2>visual-explainer</h2>
+        <p>Generates self-contained HTML visual explanations for systems, code changes, plans, data, and technical concepts.</p>
+        <ul class="mini-list">
+          <li><span class="check">1</span><span><b>Chooses a representation:</b> Mermaid, CSS cards, tables, timelines, dashboards, or slide decks.</span></li>
+          <li><span class="check">2</span><span><b>Designs the page:</b> embedded CSS/JS, typography, palette, responsive layout, and visual hierarchy.</span></li>
+          <li><span class="check">3</span><span><b>Produces an artifact:</b> a complete standalone HTML document, normally opened locally.</span></li>
+        </ul>
+      </article>
+
+      <div class="handoff" aria-hidden="true">
+        <div class="arrow">
+          <svg viewBox="0 0 64 64" fill="none"><path d="M12 32h36" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M36 18l14 14-14 14" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        handoff<br>HTML file
+      </div>
+
+      <article class="skill-card publish">
+        <div class="role">Shipper / publisher</div>
+        <h2>publish-explainer</h2>
+        <p>Publishes a standalone HTML explainer into the dedicated explainers GitHub repo as <code>/&lt;slug&gt;/index.html</code>.</p>
+        <ul class="mini-list">
+          <li><span class="check">1</span><span><b>Requires source HTML:</b> stops and asks if the file path is missing.</span></li>
+          <li><span class="check">2</span><span><b>Runs the publisher:</b> copies the file, regenerates the catalog, commits, pushes, and checks Pages.</span></li>
+          <li><span class="check">3</span><span><b>Returns delivery info:</b> local path, public URL, Pages status, and commit/push status.</span></li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="panel workflow" aria-label="End to end workflow">
+      <div class="section-title">
+        <h2>How they work together</h2>
+        <code>create → verify → publish</code>
+      </div>
+      <div class="pipeline">
+        <div class="step maker-step"><div class="num">01 / VISUAL</div><h3>Understand</h3><p>Read the relevant source, plan the explanation, and choose the best visual form.</p></div>
+        <div class="step maker-step"><div class="num">02 / VISUAL</div><h3>Render</h3><p>Write a complete self-contained HTML file with embedded CSS and any needed JS.</p></div>
+        <div class="step maker-step"><div class="num">03 / VISUAL</div><h3>Open locally</h3><p>Check layout, overflow, visual hierarchy, fonts, and browser behavior.</p></div>
+        <div class="step ship-step"><div class="num">04 / PUBLISH</div><h3>Package</h3><p>Copy the HTML into <code>~/prj/active/explainers/&lt;slug&gt;/index.html</code> and rebuild the catalog.</p></div>
+        <div class="step ship-step"><div class="num">05 / PUBLISH</div><h3>Release</h3><p>Commit, push, ensure GitHub Pages, then report the public URL.</p></div>
+      </div>
+    </section>
+
+    <section class="panel comparison" aria-label="Detailed comparison table">
+      <div class="section-title" style="padding: 24px 24px 0;">
+        <h2>Decision table</h2>
+        <code>which skill should load?</code>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Dimension</th><th>visual-explainer</th><th>publish-explainer</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Trigger phrases</td><td><span class="pill pill-maker">visualize / explain / diagram / recap</span><br>Use for diagrams, architecture overviews, plan reviews, diff reviews, project recaps, comparison tables, slide decks.</td><td><span class="pill pill-shipper">publish / deploy / make public</span><br>Use when the user asks to publish an explainer, push standalone HTML live, deploy to GitHub Pages, or make an HTML report accessible.</td></tr>
+            <tr><td>Primary job</td><td>Transform complex information into an understandable local HTML page.</td><td>Move a finished HTML page into a public hosting workflow.</td></tr>
+            <tr><td>Main command surface</td><td>Skill instructions plus optional Pi extension tool with <code>prepare</code> and <code>render</code> actions.</td><td><code>bash ./scripts/publish-explainer.sh --source ... --push --enable-pages</code></td></tr>
+            <tr><td>Default location</td><td><code>~/.agent/diagrams/</code> unless an explicit output path is requested.</td><td><code>~/prj/active/explainers</code>, publishing to <code>/&lt;slug&gt;/index.html</code>.</td></tr>
+            <tr><td>Failure mode</td><td>Bad visual artifact: missing full HTML, overflow, weak hierarchy, broken Mermaid, console errors.</td><td>Bad release artifact: missing source file, Pages not enabled, commit/push failure, wrong slug/title.</td></tr>
+            <tr><td>Mental model</td><td><b>Designer + explainer.</b> It answers: “What should this look like so people understand it?”</td><td><b>Publisher + release clerk.</b> It answers: “How do we put this already-built page somewhere others can open?”</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel workflow" aria-label="Rules of thumb">
+      <div class="section-title"><h2>Rules of thumb</h2><code>routing</code></div>
+      <div class="rule-cards">
+        <div class="rule"><h3>Use visual-explainer first when there is no page yet.</h3><p>If the user asks for a diagram, visual summary, comparison, or HTML explainer, create the standalone page locally before thinking about publishing.</p></div>
+        <div class="rule"><h3>Use publish-explainer only after HTML exists.</h3><p>It is intentionally narrow: verify a source <code>.html</code>, copy it into the explainers repo, update the catalog, commit, push, and return the URL.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      Sources: skills/visual-explainer/SKILL.md and skills/publish-explainer/SKILL.md · Generated as a standalone HTML visual explanation.
+    </footer>
+  </main>
+</body>
+</html>
